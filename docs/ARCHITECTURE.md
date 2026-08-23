@@ -85,9 +85,12 @@ Supabase Auth manages authentication.
                   │    Vite             │
                   │                     │
                   └─────────────────────┘
+```
 
-### REPOSITORY Structure:
-pool-business/
+### Repository Structure
+
+```text
+the-pool-hub/
 │
 ├── apps/
 │   ├── mobile/
@@ -106,61 +109,85 @@ pool-business/
 │
 ├── .gitignore
 └── README.md
+```
 
-Shared Types
-The packages/types package should contain TypeScript types shared between applications.
+## Shared Types
+
+The `packages/types` package should contain TypeScript types shared between applications.
+
 Examples:
-Customer
-Order
-Transaction
-Profile
-OrderStatus
-OrderType
-PaymentMethod
+
+- Customer
+- Order
+- Transaction
+- Profile
+- OrderStatus
+- OrderType
+- PaymentMethod
+
 The mobile app, web app, and server should use shared types where appropriate.
-Backend Responsibilities
+
+## Backend Responsibilities
+
 The Express API is responsible for:
-Application business logic
-Request validation
-Authentication verification
-Database operations
-Consistent API responses
-Error handling
+
+- Application business logic
+- Request validation
+- Authentication verification
+- Database operations
+- Consistent API responses
+- Error handling
+
 The backend should not duplicate authorization rules already enforced by PostgreSQL RLS, but it should still validate authentication and input.
-Frontend Responsibilities
+
+## Frontend Responsibilities
+
 The mobile and web applications are responsible for:
-User interface
-Navigation
-Form handling
-Client-side validation
-Displaying API data
-User feedback
-Authentication state
+
+- User interface
+- Navigation
+- Form handling
+- Client-side validation
+- Displaying API data
+- User feedback
+- Authentication state
+
 Business-critical authorization must never rely solely on frontend code.
-Database Responsibilities
+
+## Database Responsibilities
+
 PostgreSQL is responsible for:
-Data persistence
-Relationships
-Referential integrity
-Constraints
-Row Level Security
-Timestamps
-Data ownership
-Development Principles
-Keep the MVP small
+
+- Data persistence
+- Relationships
+- Referential integrity
+- Constraints
+- Row Level Security
+- Timestamps
+- Data ownership
+
+## Development Principles
+
+**Keep the MVP small**
 Do not implement features that are not required by V1.
-Avoid premature abstraction
+
+**Avoid premature abstraction**
 Only create abstractions when they solve a real problem.
-Prefer simple code
+
+**Prefer simple code**
 The application is intended to be maintainable by a small development team.
-Type everything
+
+**Type everything**
 TypeScript should be used throughout the application.
-Avoid any unless there is a specific justified reason.
-Validate input
+Avoid `any` unless there is a specific justified reason.
+
+**Validate input**
 All API inputs should be validated before database operations.
-Handle errors centrally
+
+**Handle errors centrally**
 The Express backend should use centralized error handling.
-Never commit secrets
-Environment variables must be stored in .env files.
-.env files must never be committed to Git.
-An .env.example file should document required environment variables without containing secrets.
+
+**Never commit secrets**
+Environment variables must be stored in `.env` files.
+`.env` files must never be committed to Git.
+An `.env.example` file should document required environment variables without containing secrets.

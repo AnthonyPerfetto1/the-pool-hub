@@ -1,4 +1,4 @@
-# Pool Business Management App
+# The Pool Hub
 
 ## Overview
 
@@ -51,7 +51,9 @@ Users can:
 - Search customers
 - View customer details
 - Edit customer information
-- Delete customers
+- Archive customers
+
+Customers are archived rather than permanently deleted. Archiving preserves the customer along with all of their associated orders and transactions. The normal customer list excludes archived customers.
 
 Customer information:
 
@@ -65,6 +67,7 @@ Customer information:
 - Pool size
 - Notes
 - Date added
+- Archived date (if archived)
 
 The mobile application should make phone numbers tappable so the user can quickly call a customer.
 
@@ -84,6 +87,10 @@ Users can:
 - Cancel an order
 - View order details
 - Edit an order
+
+Orders are not permanently deleted through the application. Completed and cancelled orders remain visible in order history.
+
+New orders default to a status of scheduled.
 
 Order types:
 
@@ -117,7 +124,8 @@ Users can:
 - Record a payment
 - View payments associated with an order
 - Edit a transaction
-- Delete a transaction
+
+Transactions represent financial records and are not permanently deleted through the application.
 
 Transaction information:
 
