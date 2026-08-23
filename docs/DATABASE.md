@@ -49,10 +49,13 @@ Columns:
 | zip | text | Yes | ZIP code |
 | pool_size | text | Yes | Pool dimensions/size |
 | notes | text | Yes | Additional notes |
+| archived_at | timestamptz | Yes | Timestamp the customer was archived, NULL if active |
 | created_at | timestamptz | No | Creation timestamp |
 | updated_at | timestamptz | No | Last update timestamp |
 
 `user_id` references `profiles.id`.
+
+Customers are archived rather than permanently deleted. Archiving a customer sets `archived_at` to the current timestamp; it does not delete the customer, its orders, or its transactions. Active customers have `archived_at = NULL`. The normal customer list excludes customers where `archived_at` is not NULL.
 
 Deleting a profile cascades to its customers.
 
@@ -72,12 +75,16 @@ Columns:
 | scheduled_date | timestamptz | No | Scheduled date/time |
 | completed_date | timestamptz | Yes | Actual completion date/time |
 | price | numeric(10,2) | No | Total order price |
-| status | text | No | Scheduled, completed, or cancelled |
+| status | text | No | Scheduled, completed, or cancelled. Defaults to `scheduled`. |
 | notes | text | Yes | Order-specific notes |
 | created_at | timestamptz | No | Creation timestamp |
 | updated_at | timestamptz | No | Last update timestamp |
 
 `customer_id` references `customers.id`.
+
+New orders default to `status = 'scheduled'`. Clients do not need to provide a status when creating an order.
+
+Orders are not permanently deleted through the application.
 
 Allowed `order_type` values:
 
@@ -90,7 +97,7 @@ Allowed `status` values:
 - completed
 - cancelled
 
-Deleting a customer cascades to their orders.
+The application does not delete customers; it archives them via `customers.archived_at`. The `ON DELETE CASCADE` on `customer_id` remains at the database level as a schema-level safety net but is not exercised through normal application use.
 
 ---
 
@@ -113,6 +120,8 @@ Columns:
 
 `order_id` references `orders.id`.
 
+Transactions represent financial records and are not permanently deleted through the application.
+
 Allowed `payment_method` values:
 
 - cash
@@ -120,7 +129,7 @@ Allowed `payment_method` values:
 - card
 - other
 
-Deleting an order cascades to its transactions.
+The application does not delete orders. The `ON DELETE CASCADE` on `order_id` remains at the database level as a schema-level safety net but is not exercised through normal application use.
 
 ## Relationships
 
@@ -142,43 +151,63 @@ orders
     | 1:many
     v
 transactions
+```
 
+## Security
 
-Security
 Row Level Security is enabled on all application tables.
+
 Users must only be able to access records belonging to themselves.
+
 Customer ownership is determined through:
-customers.user_id = auth.uid()
+
+`customers.user_id = auth.uid()`
+
 Orders inherit ownership through their customer.
+
 Transactions inherit ownership through their order and customer.
-Important Rules
-Do not create separate open_orders and closed_orders tables.
-Opening and closing are represented by orders.order_type.
-Order lifecycle is represented by orders.status.
+
+## Important Rules
+
+Do not create separate `open_orders` and `closed_orders` tables.
+
+Opening and closing are represented by `orders.order_type`.
+
+Order lifecycle is represented by `orders.status`.
+
 Do not store user passwords in application tables.
+
 Supabase Auth manages passwords and authentication.
+
 Transactions are separate from orders because one order may have multiple payments.
+
 For example:
+
+```text
 Order: $500
     |
     +-- Transaction: $200 deposit
     |
     +-- Transaction: $300 final payment
-Indexes
+```
+
+## Indexes
+
 Indexes currently exist on:
-customers.user_id
-customers.name
-orders.customer_id
-orders.scheduled_date
-orders.status
-transactions.order_id
-transactions.transaction_date
-Timestamps
+
+- customers.user_id
+- customers.name
+- orders.customer_id
+- orders.scheduled_date
+- orders.status
+- transactions.order_id
+- transactions.transaction_date
+
+## Timestamps
+
 All tables use:
-created_at
-updated_at
-updated_at is automatically updated by a database trigger whenever a row changes.
 
-Save it.
+- created_at
+- updated_at
 
----
+`updated_at` is automatically updated by a database trigger whenever a row changes.

@@ -15,9 +15,18 @@ Returns the currently authenticated user and profile.
 POST /api/v1/auth/logout
 Logs out the current user.
 Authentication credentials are managed through Supabase Auth.
+Profile
+GET /api/v1/profile
+Returns the authenticated user's profile.
+PATCH /api/v1/profile
+Updates the authenticated user's profile.
+Profile fields:
+name
+company_name
 Customers
 GET /api/v1/customers
 Returns customers belonging to the authenticated user.
+Excludes archived customers by default.
 Supports search and basic pagination.
 Potential query parameters:
 ?search=john
@@ -42,8 +51,8 @@ Example request:
 }
 PATCH /api/v1/customers/:id
 Updates a customer.
-DELETE /api/v1/customers/:id
-Deletes a customer.
+PATCH /api/v1/customers/:id/archive
+Archives a customer. Customers are archived rather than permanently deleted. Archiving sets `archived_at` and preserves the customer along with all associated orders and transactions.
 Orders
 GET /api/v1/orders
 Returns orders belonging to the authenticated user.
@@ -64,10 +73,10 @@ Example:
   "price": 250,
   "notes": "Customer requested early morning"
 }
+New orders default to status "scheduled". Clients do not need to provide a status when creating an order.
 PATCH /api/v1/orders/:id
-Updates an order.
-DELETE /api/v1/orders/:id
-Deletes an order.
+Updates an order. Used to mark an order completed or cancelled via its status field.
+Orders are not permanently deleted through the application.
 Transactions
 GET /api/v1/transactions
 Returns transactions belonging to the authenticated user.
@@ -86,17 +95,23 @@ Example:
 }
 PATCH /api/v1/transactions/:id
 Updates a transaction.
-DELETE /api/v1/transactions/:id
-Deletes a transaction.
+Transactions represent financial records and are not permanently deleted through the application.
 Dashboard
 GET /api/v1/dashboard
 Returns summary information for the authenticated user.
-Potential response data:
+Response data:
 today's jobs
 upcoming jobs
 scheduled revenue
-unpaid order totals
+unpaid amount
 current month revenue
+
+Dashboard calculations:
+
+- Scheduled revenue: sum of `price` for orders where `status = 'scheduled'`.
+- Unpaid amount: for each non-cancelled order, `max(price - sum(transactions.amount), 0)`, summed across those orders. Cancelled orders do not contribute to unpaid amounts.
+- Current month revenue: sum of `transactions.amount` where `transaction_date` falls within the current calendar month.
+
 Dashboard calculations should be performed on the server/database rather than trusted from the client.
 API Design Rules
 Authentication
