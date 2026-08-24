@@ -30,6 +30,11 @@ export const env = {
   nodeEnv: getNodeEnv(),
   port: getPort(),
   corsOrigin: getCorsOrigin(),
+  databaseUrl: process.env.DATABASE_URL,
+  // Not yet consumed by application code (Supabase Auth isn't wired up
+  // this phase). Read here so config stays centralized as it's needed.
+  supabaseUrl: process.env.SUPABASE_URL,
+  supabasePublishableKey: process.env.SUPABASE_PUBLISHABLE_KEY,
 };
 
 export const isProduction = env.nodeEnv === "production";
