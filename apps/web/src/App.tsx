@@ -1,7 +1,7 @@
 import "./App.css";
 import { AuthProvider } from "./auth/AuthContext";
 import { useAuth } from "./auth/useAuth";
-import { HomeScreen } from "./screens/HomeScreen";
+import { CustomerApp } from "./CustomerApp";
 import { LoginScreen } from "./screens/LoginScreen";
 
 function RootView() {
@@ -11,7 +11,7 @@ function RootView() {
     return <div className="auth-screen">Loading…</div>;
   }
 
-  return session ? <HomeScreen /> : <LoginScreen />;
+  return session ? <CustomerApp /> : <LoginScreen />;
 }
 
 function App() {

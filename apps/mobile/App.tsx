@@ -1,10 +1,10 @@
 import { StatusBar } from "expo-status-bar";
 import { ActivityIndicator, SafeAreaView, StyleSheet } from "react-native";
 import { AuthProvider, useAuth } from "./src/auth/AuthContext";
-import { HomeScreen } from "./src/screens/HomeScreen";
 import { LoginScreen } from "./src/screens/LoginScreen";
+import { RootNavigator } from "./src/navigation/RootNavigator";
 
-function RootNavigator() {
+function AuthGate() {
   const { session, isLoading } = useAuth();
 
   if (isLoading) {
@@ -15,14 +15,14 @@ function RootNavigator() {
     );
   }
 
-  return session ? <HomeScreen /> : <LoginScreen />;
+  return session ? <RootNavigator /> : <LoginScreen />;
 }
 
 export default function App() {
   return (
     <AuthProvider>
       <StatusBar style="auto" />
-      <RootNavigator />
+      <AuthGate />
     </AuthProvider>
   );
 }
