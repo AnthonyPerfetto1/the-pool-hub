@@ -1,20 +1,37 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { StatusBar } from "expo-status-bar";
+import { ActivityIndicator, SafeAreaView, StyleSheet } from "react-native";
+import { AuthProvider, useAuth } from "./src/auth/AuthContext";
+import { HomeScreen } from "./src/screens/HomeScreen";
+import { LoginScreen } from "./src/screens/LoginScreen";
+
+function RootNavigator() {
+  const { session, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.centered}>
+        <ActivityIndicator />
+      </SafeAreaView>
+    );
+  }
+
+  return session ? <HomeScreen /> : <LoginScreen />;
+}
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
+    <AuthProvider>
       <StatusBar style="auto" />
-    </View>
+      <RootNavigator />
+    </AuthProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  centered: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
   },
 });

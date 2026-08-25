@@ -12,6 +12,7 @@
     "db:check": "tsx --env-file-if-exists=.env src/db/check-connection.ts"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.112.4",
     "cors": "^2.8.6",
     "drizzle-orm": "^0.45.2",
     "express": "^5.2.1",
