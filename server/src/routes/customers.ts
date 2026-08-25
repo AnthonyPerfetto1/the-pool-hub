@@ -6,16 +6,11 @@ import { db } from "../db/client";
 import { customers } from "../db/schema";
 import { getAuthenticatedUserId, requireAuth } from "../middleware/auth";
 import { HttpError } from "../middleware/error-handler";
+import { isUuid, parseOptionalString } from "../utils/validation";
 
 export const customersRouter = Router();
 
 type Customer = typeof customers.$inferSelect;
-
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-function isUuid(value: string): boolean {
-  return UUID_REGEX.test(value);
-}
 
 function toCustomerResponse(customer: Customer): CustomerContract {
   return {
@@ -46,8 +41,6 @@ const OPTIONAL_STRING_FIELDS = [
   "notes",
 ] as const;
 
-type OptionalStringField = (typeof OPTIONAL_STRING_FIELDS)[number];
-
 function parseName(value: unknown): string {
   if (typeof value !== "string") {
     throw new HttpError(400, "VALIDATION_ERROR", "name must be a string.");
@@ -57,17 +50,6 @@ function parseName(value: unknown): string {
     throw new HttpError(400, "VALIDATION_ERROR", "name is required.");
   }
   return trimmed;
-}
-
-function parseOptionalString(value: unknown, field: OptionalStringField): string | null {
-  if (value === null) {
-    return null;
-  }
-  if (typeof value !== "string") {
-    throw new HttpError(400, "VALIDATION_ERROR", `${field} must be a string.`);
-  }
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
 }
 
 interface CreateCustomerData {

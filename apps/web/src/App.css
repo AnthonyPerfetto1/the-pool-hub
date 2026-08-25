@@ -90,6 +90,10 @@
   background-color: #c0392b;
 }
 
+.page button.success {
+  background-color: #2e7d32;
+}
+
 .page button:disabled {
   opacity: 0.6;
   cursor: default;
@@ -169,4 +173,42 @@
 .customer-form button {
   margin-top: 16px;
   align-self: flex-start;
+}
+
+.customer-form select {
+  padding: 10px 12px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-family: inherit;
+}
+
+.filter-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.filter-row select {
+  padding: 8px 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.order-status {
+  text-transform: capitalize;
+  font-weight: 600;
+}
+
+.status-scheduled {
+  color: #0a7ea4;
+}
+
+.status-completed {
+  color: #2e7d32;
+}
+
+.status-cancelled {
+  color: #999;
 }

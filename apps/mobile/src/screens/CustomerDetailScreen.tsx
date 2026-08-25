@@ -1,6 +1,6 @@
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import type { Customer } from "@the-pool-hub/types";
+import type { Customer, Order } from "@the-pool-hub/types";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
@@ -13,7 +13,9 @@ import {
   View,
 } from "react-native";
 import { archiveCustomer, getCustomer } from "../api/customers";
+import { listOrders } from "../api/orders";
 import { ApiError } from "../lib/api-client";
+import { formatCurrency, formatDateTime } from "../lib/format";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 
 type Props = NativeStackScreenProps<RootStackParamList, "CustomerDetail">;
@@ -29,6 +31,7 @@ function formatAddress(customer: Customer): string | null {
 export function CustomerDetailScreen({ route, navigation }: Props) {
   const { customerId } = route.params;
   const [customer, setCustomer] = useState<Customer | null>(null);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,8 +39,12 @@ export function CustomerDetailScreen({ route, navigation }: Props) {
     setIsLoading(true);
     setError(null);
     try {
-      const result = await getCustomer(customerId);
-      setCustomer(result.customer);
+      const [customerResult, ordersResult] = await Promise.all([
+        getCustomer(customerId),
+        listOrders({ customerId }),
+      ]);
+      setCustomer(customerResult.customer);
+      setOrders(ordersResult.orders);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to load customer.");
     } finally {
@@ -126,6 +133,36 @@ export function CustomerDetailScreen({ route, navigation }: Props) {
           <Text style={styles.buttonText}>Archive</Text>
         </TouchableOpacity>
       </View>
+
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Orders</Text>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("OrderForm", { mode: "create", customerId })}
+        >
+          <Text style={styles.link}>+ New Order</Text>
+        </TouchableOpacity>
+      </View>
+
+      {orders.length === 0 ? (
+        <Text style={styles.field}>No orders yet.</Text>
+      ) : (
+        orders.map((order) => (
+          <TouchableOpacity
+            key={order.id}
+            style={styles.orderRow}
+            onPress={() => navigation.navigate("OrderDetail", { orderId: order.id })}
+          >
+            <Text style={styles.orderType}>
+              {order.orderType === "opening" ? "Opening" : "Closing"} —{" "}
+              {formatCurrency(order.price)}
+            </Text>
+            <Text style={styles.orderSecondary}>{formatDateTime(order.scheduledDate)}</Text>
+            <Text style={[styles.orderStatus, styles[`status_${order.status}`]]}>
+              {order.status}
+            </Text>
+          </TouchableOpacity>
+        ))
+      )}
     </ScrollView>
   );
 }
@@ -179,5 +216,45 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 32,
+    marginBottom: 8,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  orderRow: {
+    paddingVertical: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#ddd",
+  },
+  orderType: {
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  orderSecondary: {
+    fontSize: 13,
+    color: "#666",
+    marginTop: 2,
+  },
+  orderStatus: {
+    fontSize: 13,
+    fontWeight: "600",
+    textTransform: "capitalize",
+    marginTop: 2,
+  },
+  status_scheduled: {
+    color: "#0a7ea4",
+  },
+  status_completed: {
+    color: "#2e7d32",
+  },
+  status_cancelled: {
+    color: "#999",
   },
 });

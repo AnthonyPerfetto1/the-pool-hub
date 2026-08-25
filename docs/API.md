@@ -75,7 +75,11 @@ Example:
 }
 New orders default to status "scheduled". Clients do not need to provide a status when creating an order.
 PATCH /api/v1/orders/:id
-Updates an order. Used to mark an order completed or cancelled via its status field.
+Updates an order's orderType, scheduledDate, price, and/or notes. Does not change status — use the dedicated endpoints below. Cancelled orders cannot be edited through this endpoint.
+PATCH /api/v1/orders/:id/complete
+Marks the order completed and sets completedDate. Cancelled orders cannot be completed. Idempotent if the order is already completed.
+PATCH /api/v1/orders/:id/cancel
+Marks the order cancelled. Completed orders cannot be cancelled. Idempotent if the order is already cancelled.
 Orders are not permanently deleted through the application.
 Transactions
 GET /api/v1/transactions

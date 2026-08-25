@@ -7,6 +7,7 @@ import { ApiError } from "../lib/api-client";
 interface Props {
   onSelectCustomer: (customerId: string) => void;
   onAddCustomer: () => void;
+  onViewOrders: () => void;
 }
 
 function formatSecondaryLine(customer: Customer): string {
@@ -14,7 +15,7 @@ function formatSecondaryLine(customer: Customer): string {
   return [customer.phone, address].filter(Boolean).join(" · ") || "No contact info";
 }
 
-export function CustomerListScreen({ onSelectCustomer, onAddCustomer }: Props) {
+export function CustomerListScreen({ onSelectCustomer, onAddCustomer, onViewOrders }: Props) {
   const { signOut } = useAuth();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [searchInput, setSearchInput] = useState("");
@@ -50,6 +51,9 @@ export function CustomerListScreen({ onSelectCustomer, onAddCustomer }: Props) {
       <header className="page-header">
         <h1>Customers</h1>
         <div className="page-header-actions">
+          <button type="button" className="secondary" onClick={onViewOrders}>
+            Orders
+          </button>
           <button type="button" onClick={onAddCustomer}>
             + Add
           </button>

@@ -63,11 +63,16 @@ export function CustomerListScreen({ navigation }: Props) {
         </TouchableOpacity>
       ),
       headerRight: () => (
-        <TouchableOpacity
-          onPress={() => navigation.navigate("CustomerForm", { mode: "create" })}
-        >
-          <Text style={styles.headerButton}>+ Add</Text>
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity onPress={() => navigation.navigate("OrderList", undefined)}>
+            <Text style={styles.headerButton}>Orders</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigation.navigate("CustomerForm", { mode: "create" })}
+          >
+            <Text style={styles.headerButton}>+ Add</Text>
+          </TouchableOpacity>
+        </View>
       ),
     });
   }, [navigation, signOut]);
@@ -124,6 +129,10 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     borderRadius: 8,
     fontSize: 16,
+  },
+  headerActions: {
+    flexDirection: "row",
+    gap: 16,
   },
   headerButton: {
     color: "#0a7ea4",

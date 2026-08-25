@@ -1,12 +1,16 @@
-import type { Customer } from "@the-pool-hub/types";
+import type { Customer, Order } from "@the-pool-hub/types";
 import { useCallback, useEffect, useState } from "react";
 import { archiveCustomer, getCustomer } from "../api/customers";
+import { listOrders } from "../api/orders";
 import { ApiError } from "../lib/api-client";
+import { formatCurrency, formatDateTime } from "../lib/format";
 
 interface Props {
   customerId: string;
   onBack: () => void;
   onEdit: (customerId: string) => void;
+  onSelectOrder: (orderId: string) => void;
+  onNewOrder: (customerId: string) => void;
 }
 
 function formatAddress(customer: Customer): string | null {
@@ -17,15 +21,26 @@ function formatAddress(customer: Customer): string | null {
   return lines.length > 0 ? lines.join(", ") : null;
 }
 
-export function CustomerDetailScreen({ customerId, onBack, onEdit }: Props) {
+export function CustomerDetailScreen({
+  customerId,
+  onBack,
+  onEdit,
+  onSelectOrder,
+  onNewOrder,
+}: Props) {
   const [customer, setCustomer] = useState<Customer | null>(null);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
-      const result = await getCustomer(customerId);
-      setCustomer(result.customer);
+      const [customerResult, ordersResult] = await Promise.all([
+        getCustomer(customerId),
+        listOrders({ customerId }),
+      ]);
+      setCustomer(customerResult.customer);
+      setOrders(ordersResult.orders);
       setError(null);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to load customer.");
@@ -89,6 +104,40 @@ export function CustomerDetailScreen({ customerId, onBack, onEdit }: Props) {
               Archive
             </button>
           </div>
+
+          <div className="page-header" style={{ marginTop: 32 }}>
+            <h2>Orders</h2>
+            <button type="button" className="secondary" onClick={() => onNewOrder(customerId)}>
+              + New Order
+            </button>
+          </div>
+
+          {orders.length === 0 ? (
+            <p>No orders yet.</p>
+          ) : (
+            <ul className="customer-list">
+              {orders.map((order) => (
+                <li key={order.id}>
+                  <button
+                    type="button"
+                    className="customer-row"
+                    onClick={() => onSelectOrder(order.id)}
+                  >
+                    <span className="customer-name">
+                      {order.orderType === "opening" ? "Opening" : "Closing"} —{" "}
+                      {formatCurrency(order.price)}
+                    </span>
+                    <span className="customer-secondary">
+                      {formatDateTime(order.scheduledDate)} ·{" "}
+                      <span className={`order-status status-${order.status}`}>
+                        {order.status}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       ) : null}
     </div>
