@@ -3,9 +3,11 @@ import { and, asc, eq, gte, lte } from "drizzle-orm";
 import type { Request } from "express";
 import { Router } from "express";
 import { db } from "../db/client";
+import { getTotalPaidForOrder } from "../db/order-totals";
 import { customers, orders } from "../db/schema";
 import { getAuthenticatedUserId, requireAuth } from "../middleware/auth";
 import { HttpError } from "../middleware/error-handler";
+import { centsToDecimalString, parseMonetaryValue, toCents } from "../utils/money";
 import { isUuid, parseOptionalString } from "../utils/validation";
 
 export const ordersRouter = Router();
@@ -62,26 +64,6 @@ function parseScheduledDate(value: unknown): Date {
   return date;
 }
 
-// Stored/returned as a string throughout (matches the numeric(10,2) column and
-// avoids float precision issues); this only validates a single client-supplied
-// value, it never sums or otherwise performs arithmetic across prices.
-function parsePrice(value: unknown): string {
-  if (typeof value === "number") {
-    if (!Number.isFinite(value) || value < 0) {
-      throw new HttpError(400, "VALIDATION_ERROR", "price must be a non-negative number.");
-    }
-    const formatted = value.toFixed(2);
-    if (Number(formatted) !== value) {
-      throw new HttpError(400, "VALIDATION_ERROR", "price must have at most 2 decimal places.");
-    }
-    return formatted;
-  }
-  if (typeof value === "string" && /^\d+(\.\d{1,2})?$/.test(value.trim())) {
-    return Number(value.trim()).toFixed(2);
-  }
-  throw new HttpError(400, "VALIDATION_ERROR", "price must be a non-negative monetary value.");
-}
-
 interface CreateOrderData {
   customerId: string;
   orderType: OrderType;
@@ -104,7 +86,7 @@ function parseCreateOrderInput(body: unknown): CreateOrderData {
     customerId: raw.customerId,
     orderType: parseOrderType(raw.orderType),
     scheduledDate: parseScheduledDate(raw.scheduledDate),
-    price: parsePrice(raw.price),
+    price: parseMonetaryValue(raw.price, "price", { allowZero: true }),
     notes: raw.notes !== undefined ? parseOptionalString(raw.notes, "notes") : null,
   };
 }
@@ -130,7 +112,7 @@ function parseUpdateOrderInput(body: unknown): UpdateOrderData {
     updates.scheduledDate = parseScheduledDate(raw.scheduledDate);
   }
   if (raw.price !== undefined) {
-    updates.price = parsePrice(raw.price);
+    updates.price = parseMonetaryValue(raw.price, "price", { allowZero: true });
   }
   if (raw.notes !== undefined) {
     updates.notes = parseOptionalString(raw.notes, "notes");
@@ -300,7 +282,15 @@ ordersRouter.get<{ id: string }>("/orders/:id", requireAuth, async (req, res, ne
       return;
     }
 
-    res.json({ order: toOrderResponse(row.order, row.customer) });
+    const totalPaidCents = toCents(await getTotalPaidForOrder(row.order.id));
+    const totalPaid = centsToDecimalString(totalPaidCents);
+    const amountRemaining = centsToDecimalString(
+      Math.max(toCents(row.order.price) - totalPaidCents, 0),
+    );
+
+    res.json({
+      order: { ...toOrderResponse(row.order, row.customer), totalPaid, amountRemaining },
+    });
   } catch (error) {
     next(error);
   }

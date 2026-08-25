@@ -1,24 +1,38 @@
-import type { Order } from "@the-pool-hub/types";
+import type { Order, Transaction } from "@the-pool-hub/types";
 import { useCallback, useEffect, useState } from "react";
 import { cancelOrder, completeOrder, getOrder } from "../api/orders";
+import { listTransactions } from "../api/transactions";
 import { ApiError } from "../lib/api-client";
-import { formatCurrency, formatDateTime } from "../lib/format";
+import { addCurrencyStrings, formatCurrency, formatDate, formatDateTime } from "../lib/format";
 
 interface Props {
   orderId: string;
   onBack: () => void;
   onEdit: (orderId: string) => void;
+  onAddPayment: (orderId: string, amountRemaining: string) => void;
+  onEditPayment: (transactionId: string, amountRemaining: string) => void;
 }
 
-export function OrderDetailScreen({ orderId, onBack, onEdit }: Props) {
+export function OrderDetailScreen({
+  orderId,
+  onBack,
+  onEdit,
+  onAddPayment,
+  onEditPayment,
+}: Props) {
   const [order, setOrder] = useState<Order | null>(null);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
-      const result = await getOrder(orderId);
-      setOrder(result.order);
+      const [orderResult, transactionsResult] = await Promise.all([
+        getOrder(orderId),
+        listTransactions(orderId),
+      ]);
+      setOrder(orderResult.order);
+      setTransactions(transactionsResult.transactions);
       setError(null);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to load order.");
@@ -57,6 +71,8 @@ export function OrderDetailScreen({ orderId, onBack, onEdit }: Props) {
   const canEdit = order ? order.status !== "cancelled" : false;
   const canComplete = order ? order.status === "scheduled" : false;
   const canCancel = order ? order.status === "scheduled" : false;
+  const amountRemaining = order ? order.amountRemaining ?? order.price : "0.00";
+  const canAddPayment = Number(amountRemaining) > 0;
 
   return (
     <div className="page">
@@ -97,6 +113,79 @@ export function OrderDetailScreen({ orderId, onBack, onEdit }: Props) {
               </button>
             ) : null}
           </div>
+
+          <div className="page-header" style={{ marginTop: 32 }}>
+            <h2>Payment Summary</h2>
+          </div>
+          <table className="summary-table">
+            <tbody>
+              <tr>
+                <td>Order Total</td>
+                <td>{formatCurrency(order.price)}</td>
+              </tr>
+              <tr>
+                <td>Paid</td>
+                <td>{formatCurrency(order.totalPaid ?? "0.00")}</td>
+              </tr>
+              <tr>
+                <td>Remaining</td>
+                <td>{formatCurrency(amountRemaining)}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div className="page-header" style={{ marginTop: 32 }}>
+            <h2>Payments</h2>
+            {canAddPayment ? (
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => onAddPayment(orderId, amountRemaining)}
+              >
+                + Add Payment
+              </button>
+            ) : null}
+          </div>
+
+          {transactions.length === 0 ? (
+            <p>No payments yet.</p>
+          ) : (
+            <table className="payment-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Amount</th>
+                  <th>Method</th>
+                  <th>Notes</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {transactions.map((transaction) => (
+                  <tr key={transaction.id}>
+                    <td>{formatDate(transaction.transactionDate)}</td>
+                    <td>{formatCurrency(transaction.amount)}</td>
+                    <td className="capitalize">{transaction.paymentMethod}</td>
+                    <td>{transaction.notes ?? ""}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="secondary"
+                        onClick={() =>
+                          onEditPayment(
+                            transaction.id,
+                            addCurrencyStrings(amountRemaining, transaction.amount),
+                          )
+                        }
+                      >
+                        Edit
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       ) : null}
     </div>

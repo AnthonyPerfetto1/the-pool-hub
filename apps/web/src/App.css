@@ -212,3 +212,31 @@
 .status-cancelled {
   color: #999;
 }
+
+.summary-table,
+.payment-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+
+.summary-table td {
+  padding: 4px 0;
+}
+
+.summary-table td:last-child {
+  text-align: right;
+  font-weight: 600;
+}
+
+.payment-table th,
+.payment-table td {
+  text-align: left;
+  padding: 8px 8px 8px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+}
+
+.capitalize {
+  text-transform: capitalize;
+}

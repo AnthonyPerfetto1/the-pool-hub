@@ -50,6 +50,10 @@ export interface Order {
   notes: string | null;
   createdAt: string;
   updatedAt: string;
+  // Only populated by GET /orders/:id — calculated from transactions,
+  // never stored. Absent on list/create/update/complete/cancel responses.
+  totalPaid?: string;
+  amountRemaining?: string;
 }
 
 export interface CreateOrderInput {
@@ -62,4 +66,29 @@ export interface CreateOrderInput {
 
 export type UpdateOrderInput = Partial<
   Pick<CreateOrderInput, "orderType" | "scheduledDate" | "price" | "notes">
+>;
+
+export type PaymentMethod = "cash" | "check" | "card" | "other";
+
+export interface Transaction {
+  id: string;
+  orderId: string;
+  amount: string;
+  transactionDate: string;
+  paymentMethod: PaymentMethod;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateTransactionInput {
+  orderId: string;
+  amount: number | string;
+  transactionDate: string;
+  paymentMethod: PaymentMethod;
+  notes?: string | null;
+}
+
+export type UpdateTransactionInput = Partial<
+  Pick<CreateTransactionInput, "amount" | "transactionDate" | "paymentMethod" | "notes">
 >;

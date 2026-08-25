@@ -6,6 +6,7 @@ import { CustomerListScreen } from "../screens/CustomerListScreen";
 import { OrderDetailScreen } from "../screens/OrderDetailScreen";
 import { OrderFormScreen } from "../screens/OrderFormScreen";
 import { OrderListScreen } from "../screens/OrderListScreen";
+import { PaymentFormScreen } from "../screens/PaymentFormScreen";
 
 export type RootStackParamList = {
   CustomerList: undefined;
@@ -14,6 +15,11 @@ export type RootStackParamList = {
   OrderList: { customerId?: string } | undefined;
   OrderDetail: { orderId: string };
   OrderForm: { mode: "create"; customerId: string } | { mode: "edit"; orderId: string };
+  PaymentForm: {
+    target:
+      | { mode: "create"; orderId: string; amountRemaining: string }
+      | { mode: "edit"; transactionId: string; amountRemaining: string };
+  };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -50,6 +56,13 @@ export function RootNavigator() {
           component={OrderFormScreen}
           options={({ route }) => ({
             title: route.params.mode === "edit" ? "Edit Order" : "New Order",
+          })}
+        />
+        <Stack.Screen
+          name="PaymentForm"
+          component={PaymentFormScreen}
+          options={({ route }) => ({
+            title: route.params.target.mode === "edit" ? "Edit Payment" : "Add Payment",
           })}
         />
       </Stack.Navigator>

@@ -5,8 +5,10 @@ import { CustomerListScreen } from "./screens/CustomerListScreen";
 import { OrderDetailScreen } from "./screens/OrderDetailScreen";
 import { OrderFormScreen, type OrderFormTarget } from "./screens/OrderFormScreen";
 import { OrderListScreen } from "./screens/OrderListScreen";
+import { PaymentFormScreen, type PaymentFormTarget } from "./screens/PaymentFormScreen";
 
 type OrderReturnTarget = { screen: "orders" } | { screen: "detail"; customerId: string };
+type OrderDetailView = { screen: "orderDetail"; orderId: string; returnTo: OrderReturnTarget };
 
 type View =
   | { screen: "list" }
@@ -14,8 +16,9 @@ type View =
   | { screen: "form"; mode: "create" }
   | { screen: "form"; mode: "edit"; customerId: string }
   | { screen: "orders" }
-  | { screen: "orderDetail"; orderId: string; returnTo: OrderReturnTarget }
-  | { screen: "orderForm"; target: OrderFormTarget; returnTo: OrderReturnTarget };
+  | OrderDetailView
+  | { screen: "orderForm"; target: OrderFormTarget; returnTo: OrderReturnTarget }
+  | { screen: "paymentForm"; target: PaymentFormTarget; returnTo: OrderDetailView };
 
 export function CustomerApp() {
   const [view, setView] = useState<View>({ screen: "list" });
@@ -74,6 +77,20 @@ export function CustomerApp() {
         onEdit={(orderId) =>
           setView({ screen: "orderForm", target: { mode: "edit", orderId }, returnTo })
         }
+        onAddPayment={(orderId, amountRemaining) =>
+          setView({
+            screen: "paymentForm",
+            target: { mode: "create", orderId, amountRemaining },
+            returnTo: view,
+          })
+        }
+        onEditPayment={(transactionId, amountRemaining) =>
+          setView({
+            screen: "paymentForm",
+            target: { mode: "edit", transactionId, amountRemaining },
+            returnTo: view,
+          })
+        }
       />
     );
   }
@@ -82,6 +99,17 @@ export function CustomerApp() {
     const { returnTo } = view;
     return (
       <OrderFormScreen
+        target={view.target}
+        onDone={() => setView(returnTo)}
+        onCancel={() => setView(returnTo)}
+      />
+    );
+  }
+
+  if (view.screen === "paymentForm") {
+    const { returnTo } = view;
+    return (
+      <PaymentFormScreen
         target={view.target}
         onDone={() => setView(returnTo)}
         onCancel={() => setView(returnTo)}

@@ -20,3 +20,15 @@ export function formatDate(iso: string): string {
   const date = new Date(iso);
   return date.toLocaleDateString(undefined, { dateStyle: "medium" });
 }
+
+// Integer-cents addition of two decimal strings — used to compute the
+// client-side edit ceiling (remaining balance + this transaction's own
+// current amount), without floating-point arithmetic on the actual values.
+export function addCurrencyStrings(a: string, b: string): string {
+  const toCents = (value: string) => {
+    const [whole, fraction = ""] = value.split(".");
+    return Number(whole || "0") * 100 + Number(fraction.padEnd(2, "0").slice(0, 2) || "0");
+  };
+  const totalCents = toCents(a) + toCents(b);
+  return `${Math.floor(totalCents / 100)}.${String(totalCents % 100).padStart(2, "0")}`;
+}
