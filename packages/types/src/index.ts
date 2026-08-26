@@ -92,3 +92,21 @@ export interface CreateTransactionInput {
 export type UpdateTransactionInput = Partial<
   Pick<CreateTransactionInput, "amount" | "transactionDate" | "paymentMethod" | "notes">
 >;
+
+export interface DashboardRevenue {
+  // Sum of transaction amounts recorded in the period.
+  madeRevenue: string;
+  // Sum of prices for scheduled/completed orders scheduled in the period.
+  // This is the full order value, never reduced by payments received.
+  expectedRevenue: string;
+}
+
+export interface Dashboard {
+  // Earliest scheduled order (today or in the future). Null if there are no
+  // scheduled orders at all.
+  nextAppointment: Order | null;
+  // Up to 5 further scheduled orders after nextAppointment, chronological.
+  upcomingAppointments: Order[];
+  week: DashboardRevenue;
+  month: DashboardRevenue;
+}

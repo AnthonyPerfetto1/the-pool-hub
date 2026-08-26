@@ -17,7 +17,7 @@ type Customer = typeof customers.$inferSelect;
 
 const ORDER_TYPES = ["opening", "closing"] as const;
 
-function toOrderResponse(order: Order, customer: Customer): OrderContract {
+export function toOrderResponse(order: Order, customer: Customer): OrderContract {
   return {
     id: order.id,
     customerId: order.customerId,
