@@ -3,12 +3,14 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { CustomerDetailScreen } from "../screens/CustomerDetailScreen";
 import { CustomerFormScreen } from "../screens/CustomerFormScreen";
 import { CustomerListScreen } from "../screens/CustomerListScreen";
+import { DashboardScreen } from "../screens/DashboardScreen";
 import { OrderDetailScreen } from "../screens/OrderDetailScreen";
 import { OrderFormScreen } from "../screens/OrderFormScreen";
 import { OrderListScreen } from "../screens/OrderListScreen";
 import { PaymentFormScreen } from "../screens/PaymentFormScreen";
 
 export type RootStackParamList = {
+  Dashboard: undefined;
   CustomerList: undefined;
   CustomerDetail: { customerId: string };
   CustomerForm: { mode: "create" } | { mode: "edit"; customerId: string };
@@ -27,7 +29,12 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export function RootNavigator() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="CustomerList">
+      <Stack.Navigator initialRouteName="Dashboard">
+        <Stack.Screen
+          name="Dashboard"
+          component={DashboardScreen}
+          options={{ title: "Dashboard" }}
+        />
         <Stack.Screen
           name="CustomerList"
           component={CustomerListScreen}

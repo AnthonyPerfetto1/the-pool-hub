@@ -1,7 +1,12 @@
 import type { OrderStatus } from "@the-pool-hub/types";
 import { describe, expect, it } from "vitest";
 import type { DateRange } from "./date-ranges";
-import { selectAppointments, sumExpectedRevenue, sumMadeRevenue } from "./dashboard-calculations";
+import {
+  buildShortAddress,
+  selectAppointments,
+  sumExpectedRevenue,
+  sumMadeRevenue,
+} from "./dashboard-calculations";
 
 function candidate(status: OrderStatus, isoDate: string, data: string) {
   return { status, scheduledDate: new Date(isoDate), data };
@@ -174,5 +179,27 @@ describe("calculations do not leak state between calls", () => {
     );
     expect(userATotal).toBe("100.00");
     expect(userBTotal).toBe("50.00");
+  });
+});
+
+describe("buildShortAddress", () => {
+  it("prefers the street address when present", () => {
+    const address = buildShortAddress({ street: "123 Main Street", city: "Ann Arbor", state: "MI" });
+    expect(address).toBe("123 Main Street");
+  });
+
+  it("falls back to city and state when there is no street", () => {
+    const address = buildShortAddress({ street: null, city: "Ann Arbor", state: "MI" });
+    expect(address).toBe("Ann Arbor, MI");
+  });
+
+  it("falls back to just the city when there is no street or state", () => {
+    const address = buildShortAddress({ street: null, city: "Ann Arbor", state: null });
+    expect(address).toBe("Ann Arbor");
+  });
+
+  it("returns null when there is no usable address information", () => {
+    const address = buildShortAddress({ street: null, city: null, state: null });
+    expect(address).toBeNull();
   });
 });

@@ -23,6 +23,13 @@ export function centsToDecimalString(cents: number): string {
   return `${isNegative ? "-" : ""}${dollars}.${String(remainder).padStart(2, "0")}`;
 }
 
+// Mirrors the remaining-balance calculation already used inline by
+// GET /orders/:id, exposed as a helper so other callers (currently the
+// dashboard route) don't hand-roll the same cents arithmetic.
+export function computeAmountRemaining(price: string, totalPaid: string): string {
+  return centsToDecimalString(Math.max(toCents(price) - toCents(totalPaid), 0));
+}
+
 interface ParseMonetaryOptions {
   allowZero?: boolean;
 }

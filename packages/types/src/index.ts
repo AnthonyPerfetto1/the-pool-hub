@@ -50,10 +50,12 @@ export interface Order {
   notes: string | null;
   createdAt: string;
   updatedAt: string;
-  // Only populated by GET /orders/:id — calculated from transactions,
-  // never stored. Absent on list/create/update/complete/cancel responses.
+  // Only populated by GET /orders/:id and the dashboard's nextAppointment —
+  // calculated from transactions, never stored. Absent everywhere else.
   totalPaid?: string;
   amountRemaining?: string;
+  // Only populated on the dashboard's nextAppointment.
+  customerAddress?: string | null;
 }
 
 export interface CreateOrderInput {
@@ -102,10 +104,14 @@ export interface DashboardRevenue {
 }
 
 export interface Dashboard {
-  // Earliest scheduled order (today or in the future). Null if there are no
+  // Earliest scheduled order (today or in the future), enriched with
+  // amountRemaining and customerAddress so the mobile primary appointment
+  // card is renderable from this response alone. Null if there are no
   // scheduled orders at all.
   nextAppointment: Order | null;
   // Up to 5 further scheduled orders after nextAppointment, chronological.
+  // Plain Order shape (no amountRemaining/customerAddress) — the current
+  // upcoming-appointment UI doesn't display either.
   upcomingAppointments: Order[];
   week: DashboardRevenue;
   month: DashboardRevenue;

@@ -13,7 +13,6 @@ import {
   View,
 } from "react-native";
 import { listCustomers } from "../api/customers";
-import { useAuth } from "../auth/AuthContext";
 import { ApiError } from "../lib/api-client";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 
@@ -25,7 +24,6 @@ function formatSecondaryLine(customer: Customer): string {
 }
 
 export function CustomerListScreen({ navigation }: Props) {
-  const { signOut } = useAuth();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [search, setSearch] = useState("");
   const searchRef = useRef(search);
@@ -56,12 +54,10 @@ export function CustomerListScreen({ navigation }: Props) {
   );
 
   useEffect(() => {
+    // headerLeft is intentionally left as the default back button now that
+    // Dashboard (not this screen) is the navigation root — Log Out lives on
+    // Dashboard's header instead.
     navigation.setOptions({
-      headerLeft: () => (
-        <TouchableOpacity onPress={() => signOut()}>
-          <Text style={styles.headerButton}>Log Out</Text>
-        </TouchableOpacity>
-      ),
       headerRight: () => (
         <View style={styles.headerActions}>
           <TouchableOpacity onPress={() => navigation.navigate("OrderList", undefined)}>
@@ -75,7 +71,7 @@ export function CustomerListScreen({ navigation }: Props) {
         </View>
       ),
     });
-  }, [navigation, signOut]);
+  }, [navigation]);
 
   return (
     <View style={styles.container}>

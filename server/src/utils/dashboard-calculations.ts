@@ -46,6 +46,20 @@ export function sumExpectedRevenue(orders: ExpectedRevenueOrder[], range: DateRa
   return centsToDecimalString(cents);
 }
 
+interface AddressableCustomer {
+  street: string | null;
+  city: string | null;
+  state: string | null;
+}
+
+// One-line address for the dashboard's primary appointment card: street if
+// present, otherwise "city, state", otherwise null (no usable address).
+export function buildShortAddress(customer: AddressableCustomer): string | null {
+  if (customer.street) return customer.street;
+  const cityState = [customer.city, customer.state].filter(Boolean).join(", ");
+  return cityState || null;
+}
+
 interface MadeRevenueTransaction {
   transactionDate: Date;
   amount: string;

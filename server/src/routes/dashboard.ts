@@ -2,10 +2,17 @@ import type { Dashboard } from "@the-pool-hub/types";
 import { and, asc, eq, gte, lt, ne } from "drizzle-orm";
 import { Router } from "express";
 import { db } from "../db/client";
+import { getTotalPaidForOrder } from "../db/order-totals";
 import { customers, orders, transactions } from "../db/schema";
 import { getAuthenticatedUserId, requireAuth } from "../middleware/auth";
+import {
+  buildShortAddress,
+  selectAppointments,
+  sumExpectedRevenue,
+  sumMadeRevenue,
+} from "../utils/dashboard-calculations";
 import { getMonthRange, getWeekRange } from "../utils/date-ranges";
-import { selectAppointments, sumExpectedRevenue, sumMadeRevenue } from "../utils/dashboard-calculations";
+import { computeAmountRemaining } from "../utils/money";
 import { toOrderResponse } from "./orders";
 
 export const dashboardRouter = Router();
@@ -73,8 +80,18 @@ dashboardRouter.get("/dashboard", requireAuth, async (req, res, next) => {
     const revenueOrders = revenueOrderRows.map((row) => row.order);
     const revenueTransactions = revenueTransactionRows.map((row) => row.transaction);
 
+    let nextAppointment: Dashboard["nextAppointment"] = null;
+    if (next) {
+      const totalPaid = await getTotalPaidForOrder(next.order.id);
+      nextAppointment = {
+        ...toOrderResponse(next.order, next.customer),
+        amountRemaining: computeAmountRemaining(next.order.price, totalPaid),
+        customerAddress: buildShortAddress(next.customer),
+      };
+    }
+
     const dashboard: Dashboard = {
-      nextAppointment: next ? toOrderResponse(next.order, next.customer) : null,
+      nextAppointment,
       upcomingAppointments: upcoming.map((row) => toOrderResponse(row.order, row.customer)),
       week: {
         madeRevenue: sumMadeRevenue(revenueTransactions, week),
