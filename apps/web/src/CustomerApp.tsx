@@ -2,15 +2,23 @@ import { useState } from "react";
 import { CustomerDetailScreen } from "./screens/CustomerDetailScreen";
 import { CustomerFormScreen } from "./screens/CustomerFormScreen";
 import { CustomerListScreen } from "./screens/CustomerListScreen";
+import { DashboardScreen } from "./screens/DashboardScreen";
 import { OrderDetailScreen } from "./screens/OrderDetailScreen";
 import { OrderFormScreen, type OrderFormTarget } from "./screens/OrderFormScreen";
 import { OrderListScreen } from "./screens/OrderListScreen";
 import { PaymentFormScreen, type PaymentFormTarget } from "./screens/PaymentFormScreen";
+import { ScheduleScreen } from "./screens/ScheduleScreen";
 
-type OrderReturnTarget = { screen: "orders" } | { screen: "detail"; customerId: string };
+type OrderReturnTarget =
+  | { screen: "orders" }
+  | { screen: "detail"; customerId: string }
+  | { screen: "dashboard" }
+  | { screen: "schedule" };
 type OrderDetailView = { screen: "orderDetail"; orderId: string; returnTo: OrderReturnTarget };
 
 type View =
+  | { screen: "dashboard" }
+  | { screen: "schedule" }
   | { screen: "list" }
   | { screen: "detail"; customerId: string }
   | { screen: "form"; mode: "create" }
@@ -21,7 +29,37 @@ type View =
   | { screen: "paymentForm"; target: PaymentFormTarget; returnTo: OrderDetailView };
 
 export function CustomerApp() {
-  const [view, setView] = useState<View>({ screen: "list" });
+  const [view, setView] = useState<View>({ screen: "dashboard" });
+
+  if (view.screen === "dashboard") {
+    return (
+      <DashboardScreen
+        onViewDashboard={() => setView({ screen: "dashboard" })}
+        onViewSchedule={() => setView({ screen: "schedule" })}
+        onViewCustomers={() => setView({ screen: "list" })}
+        onViewOrders={() => setView({ screen: "orders" })}
+        onSelectOrder={(orderId) =>
+          setView({ screen: "orderDetail", orderId, returnTo: { screen: "dashboard" } })
+        }
+        onScheduleJob={() => setView({ screen: "list" })}
+      />
+    );
+  }
+
+  if (view.screen === "schedule") {
+    return (
+      <ScheduleScreen
+        onViewDashboard={() => setView({ screen: "dashboard" })}
+        onViewSchedule={() => setView({ screen: "schedule" })}
+        onViewCustomers={() => setView({ screen: "list" })}
+        onViewOrders={() => setView({ screen: "orders" })}
+        onSelectOrder={(orderId) =>
+          setView({ screen: "orderDetail", orderId, returnTo: { screen: "schedule" } })
+        }
+        onScheduleJob={() => setView({ screen: "list" })}
+      />
+    );
+  }
 
   if (view.screen === "detail") {
     return (
@@ -60,7 +98,7 @@ export function CustomerApp() {
   if (view.screen === "orders") {
     return (
       <OrderListScreen
-        onBack={() => setView({ screen: "list" })}
+        onBack={() => setView({ screen: "dashboard" })}
         onSelectOrder={(orderId) =>
           setView({ screen: "orderDetail", orderId, returnTo: { screen: "orders" } })
         }
@@ -119,6 +157,7 @@ export function CustomerApp() {
 
   return (
     <CustomerListScreen
+      onBack={() => setView({ screen: "dashboard" })}
       onSelectCustomer={(customerId) => setView({ screen: "detail", customerId })}
       onAddCustomer={() => setView({ screen: "form", mode: "create" })}
       onViewOrders={() => setView({ screen: "orders" })}

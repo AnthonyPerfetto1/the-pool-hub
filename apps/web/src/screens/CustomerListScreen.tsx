@@ -8,6 +8,7 @@ interface Props {
   onSelectCustomer: (customerId: string) => void;
   onAddCustomer: () => void;
   onViewOrders: () => void;
+  onBack?: () => void;
 }
 
 function formatSecondaryLine(customer: Customer): string {
@@ -15,7 +16,12 @@ function formatSecondaryLine(customer: Customer): string {
   return [customer.phone, address].filter(Boolean).join(" · ") || "No contact info";
 }
 
-export function CustomerListScreen({ onSelectCustomer, onAddCustomer, onViewOrders }: Props) {
+export function CustomerListScreen({
+  onSelectCustomer,
+  onAddCustomer,
+  onViewOrders,
+  onBack,
+}: Props) {
   const { signOut } = useAuth();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [searchInput, setSearchInput] = useState("");
@@ -51,6 +57,11 @@ export function CustomerListScreen({ onSelectCustomer, onAddCustomer, onViewOrde
       <header className="page-header">
         <h1>Customers</h1>
         <div className="page-header-actions">
+          {onBack ? (
+            <button type="button" className="secondary" onClick={onBack}>
+              ← Dashboard
+            </button>
+          ) : null}
           <button type="button" className="secondary" onClick={onViewOrders}>
             Orders
           </button>

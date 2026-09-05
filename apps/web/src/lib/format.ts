@@ -21,6 +21,14 @@ export function formatDate(iso: string): string {
   return date.toLocaleDateString(undefined, { dateStyle: "medium" });
 }
 
+export function formatTimeOnly(iso: string): string {
+  return new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}
+
+export function formatOrderTypeLabel(orderType: "opening" | "closing"): string {
+  return orderType === "opening" ? "Pool Opening" : "Pool Closing";
+}
+
 // Integer-cents addition of two decimal strings — used to compute the
 // client-side edit ceiling (remaining balance + this transaction's own
 // current amount), without floating-point arithmetic on the actual values.

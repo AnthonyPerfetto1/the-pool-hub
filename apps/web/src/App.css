@@ -119,7 +119,14 @@
   margin: 0;
 }
 
-.customer-row {
+/* button.customer-row (not .customer-row): a bare class selector here loses
+   a specificity tie to ".page button" (class+type beats class alone), which
+   was silently rendering every customer row with the solid blue/white
+   button treatment instead of this list-row style. Pre-existing, found
+   while testing Phase 6D's own new .appointment-card-button/.upcoming-row,
+   which had the identical issue; fixed here too since the cause and fix are
+   the same and it was left broken by coincidence rather than on purpose. */
+button.customer-row {
   width: 100%;
   text-align: left;
   display: flex;
@@ -239,4 +246,366 @@
 
 .capitalize {
   text-transform: capitalize;
+}
+
+/* ===== Phase 6D: Dashboard / Schedule (business control panel) =====
+   Additive only — nothing above this point is modified. These screens use
+   `.page` too (for the existing button/utility styles) but override its
+   max-width to make better use of desktop horizontal space. */
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid #eee;
+  background: #fff;
+}
+
+.app-header-brand {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.app-header-nav {
+  display: flex;
+  gap: 4px;
+}
+
+.app-header-link {
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.app-header-link:hover {
+  background-color: #f2f8fa;
+}
+
+.app-header-link.active {
+  color: #0a7ea4;
+  background-color: #e4f0f4;
+}
+
+.dashboard-page {
+  max-width: 1100px;
+}
+
+.dashboard-intro {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.dashboard-intro h1 {
+  margin: 0;
+  font-size: 28px;
+  /* The global h1 rule in index.css inherits a fixed-px line-height computed
+     from the root's percentage value, which is far smaller than a 56px
+     heading needs and causes visible glyph overlap with anything below it.
+     A unitless line-height here scales correctly with this rule's own
+     font-size instead of inheriting that stale pixel value. */
+  line-height: 1.3;
+}
+
+.dashboard-subtitle {
+  margin: 4px 0 0;
+  color: #666;
+}
+
+.dashboard-error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.info-card {
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 20px;
+  background: #fafafa;
+}
+
+.card-eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0a7ea4;
+  letter-spacing: 0.5px;
+  margin: 0 0 16px;
+}
+
+.revenue-row {
+  display: flex;
+  gap: 32px;
+}
+
+.revenue-row > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.revenue-label {
+  font-size: 13px;
+  color: #666;
+}
+
+.revenue-value {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+button.appointment-card-button {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.appointment-customer {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.appointment-detail {
+  font-size: 14px;
+  color: #555;
+}
+
+.appointment-money {
+  font-weight: 600;
+  color: #111;
+  margin-top: 6px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  color: #666;
+}
+
+.empty-state-text {
+  color: #666;
+  margin: 0;
+}
+
+.upcoming-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+button.upcoming-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1.3fr 1fr 0.8fr 0.7fr;
+  gap: 8px;
+  align-items: center;
+  text-align: left;
+  padding: 10px 0;
+  border: none;
+  border-bottom: 1px solid #eee;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.upcoming-when {
+  font-size: 13px;
+  color: #666;
+}
+
+.upcoming-customer {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.upcoming-type,
+.upcoming-price {
+  font-size: 13px;
+  color: #555;
+  text-align: right;
+}
+
+.week-nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.week-nav-current {
+  font-size: 13px;
+  color: #0a7ea4;
+  font-weight: 600;
+}
+
+.schedule-grid-wrapper {
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.schedule-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(150px, 1fr));
+  gap: 12px;
+  min-width: 1050px;
+}
+
+.schedule-day-column {
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 10px;
+  background: #fafafa;
+  min-height: 120px;
+}
+
+.schedule-day-column.today {
+  border-color: #0a7ea4;
+  background: #f2f8fa;
+}
+
+.schedule-day-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #e2e2e2;
+}
+
+.schedule-day-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #333;
+  letter-spacing: 0.3px;
+}
+
+.schedule-day-column.today .schedule-day-name {
+  color: #0a7ea4;
+}
+
+.schedule-day-date {
+  font-size: 12px;
+  color: #888;
+}
+
+.today-badge {
+  align-self: flex-start;
+  margin-top: 2px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  background-color: #0a7ea4;
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.schedule-empty-day {
+  font-size: 12px;
+  color: #999;
+  margin: 0;
+}
+
+button.schedule-job-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  text-align: left;
+  gap: 2px;
+  padding: 8px;
+  margin-bottom: 6px;
+  border: 1px solid #e2e2e2;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+}
+
+button.schedule-job-card.cancelled {
+  opacity: 0.55;
+}
+
+.schedule-job-time {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0a7ea4;
+}
+
+.schedule-job-customer {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111;
+}
+
+.schedule-job-type {
+  font-size: 11px;
+  color: #666;
+}
+
+.schedule-job-price {
+  font-size: 12px;
+  font-weight: 600;
+  color: #111;
+}
+
+.status-badge {
+  align-self: flex-start;
+  margin-top: 2px;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.status-completed-badge {
+  color: #fff;
+  background-color: #2e7d32;
+}
+
+.status-cancelled-badge {
+  color: #fff;
+  background-color: #c0392b;
+}
+
+@media (max-width: 720px) {
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .app-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .app-header-nav {
+    flex-wrap: wrap;
+  }
 }
