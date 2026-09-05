@@ -15,7 +15,12 @@ import { getDashboard } from "../api/dashboard";
 import { getProfile } from "../api/profile";
 import { useAuth } from "../auth/AuthContext";
 import { ApiError } from "../lib/api-client";
-import { formatAppointmentWhen, formatCurrency, formatOrderTypeLabel } from "../lib/format";
+import {
+  formatAppointmentWhen,
+  formatCurrency,
+  formatOrderTypeLabel,
+  formatTimeOnly,
+} from "../lib/format";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Dashboard">;
@@ -25,10 +30,6 @@ function getGreeting(): string {
   if (hour < 12) return "Good morning";
   if (hour < 18) return "Good afternoon";
   return "Good evening";
-}
-
-function formatTimeOnly(iso: string): string {
-  return new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 }
 
 function PrimaryAppointmentCard({ order, onPress }: { order: Order; onPress: () => void }) {
@@ -202,8 +203,8 @@ export function DashboardScreen({ navigation }: Props) {
           <TouchableOpacity onPress={() => navigation.navigate("CustomerList")}>
             <Text style={styles.headerButton}>Customers</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate("OrderList", undefined)}>
-            <Text style={styles.headerButton}>Orders</Text>
+          <TouchableOpacity onPress={() => navigation.navigate("Schedule")}>
+            <Text style={styles.headerButton}>Schedule</Text>
           </TouchableOpacity>
         </View>
       ),

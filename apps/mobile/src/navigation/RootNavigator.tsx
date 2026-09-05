@@ -8,9 +8,11 @@ import { OrderDetailScreen } from "../screens/OrderDetailScreen";
 import { OrderFormScreen } from "../screens/OrderFormScreen";
 import { OrderListScreen } from "../screens/OrderListScreen";
 import { PaymentFormScreen } from "../screens/PaymentFormScreen";
+import { ScheduleScreen } from "../screens/ScheduleScreen";
 
 export type RootStackParamList = {
   Dashboard: undefined;
+  Schedule: undefined;
   CustomerList: undefined;
   CustomerDetail: { customerId: string };
   CustomerForm: { mode: "create" } | { mode: "edit"; customerId: string };
@@ -34,6 +36,11 @@ export function RootNavigator() {
           name="Dashboard"
           component={DashboardScreen}
           options={{ title: "Dashboard" }}
+        />
+        <Stack.Screen
+          name="Schedule"
+          component={ScheduleScreen}
+          options={{ title: "Schedule" }}
         />
         <Stack.Screen
           name="CustomerList"

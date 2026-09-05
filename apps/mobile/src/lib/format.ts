@@ -33,6 +33,10 @@ export function addCurrencyStrings(a: string, b: string): string {
   return `${Math.floor(totalCents / 100)}.${String(totalCents % 100).padStart(2, "0")}`;
 }
 
+export function formatTimeOnly(iso: string): string {
+  return new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}
+
 // "Today · 9:00 AM" / "Tomorrow · 9:00 AM" / "Mon, Jan 5 · 9:00 AM" — all
 // compared using the device's local calendar day, matching every other
 // date display in the app (nothing here talks to the server's timezone
@@ -43,7 +47,7 @@ export function formatAppointmentWhen(iso: string): string {
   const dateDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const diffDays = Math.round((dateDay.getTime() - today.getTime()) / (24 * 60 * 60 * 1000));
-  const time = date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  const time = formatTimeOnly(iso);
 
   if (diffDays === 0) return `Today · ${time}`;
   if (diffDays === 1) return `Tomorrow · ${time}`;

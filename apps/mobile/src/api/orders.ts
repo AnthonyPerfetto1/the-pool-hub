@@ -21,6 +21,11 @@ export interface OrderListFilters {
   customerId?: string;
   status?: OrderStatus;
   orderType?: OrderType;
+  // ISO instants — the backend already supports these (see server/src/routes/orders.ts),
+  // just not previously exposed through this client.
+  scheduledFrom?: string;
+  scheduledTo?: string;
+  limit?: number;
 }
 
 export function listOrders(filters: OrderListFilters = {}): Promise<OrderListResponse> {
@@ -28,6 +33,9 @@ export function listOrders(filters: OrderListFilters = {}): Promise<OrderListRes
   if (filters.customerId) params.set("customerId", filters.customerId);
   if (filters.status) params.set("status", filters.status);
   if (filters.orderType) params.set("orderType", filters.orderType);
+  if (filters.scheduledFrom) params.set("scheduledFrom", filters.scheduledFrom);
+  if (filters.scheduledTo) params.set("scheduledTo", filters.scheduledTo);
+  if (filters.limit) params.set("limit", String(filters.limit));
   const query = params.toString();
   return apiClient.get<OrderListResponse>(`/orders${query ? `?${query}` : ""}`);
 }
