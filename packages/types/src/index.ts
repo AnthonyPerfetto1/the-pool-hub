@@ -115,4 +115,13 @@ export interface Dashboard {
   upcomingAppointments: Order[];
   week: DashboardRevenue;
   month: DashboardRevenue;
+  year: DashboardRevenue;
+  // Orders actually completed within each period (by completedDate, not
+  // scheduledDate) — a job scheduled in one period can be completed in
+  // another.
+  completedOrders: {
+    week: number;
+    month: number;
+    year: number;
+  };
 }

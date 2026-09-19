@@ -1,5 +1,4 @@
 import { useFocusEffect } from "@react-navigation/native";
-import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { Order, OrderStatus, OrderType } from "@the-pool-hub/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -12,11 +11,12 @@ import {
   View,
 } from "react-native";
 import { listOrders } from "../api/orders";
+import { TabHeader } from "../components/TabHeader";
 import { ApiError } from "../lib/api-client";
 import { formatCurrency, formatDateTime } from "../lib/format";
-import type { RootStackParamList } from "../navigation/RootNavigator";
+import type { TabScreenProps } from "../navigation/TabNavigator";
 
-type Props = NativeStackScreenProps<RootStackParamList, "OrderList">;
+type Props = TabScreenProps<"Jobs">;
 
 const STATUS_FILTERS: { label: string; value: OrderStatus | undefined }[] = [
   { label: "All", value: undefined },
@@ -31,8 +31,7 @@ const TYPE_FILTERS: { label: string; value: OrderType | undefined }[] = [
   { label: "Closing", value: "closing" },
 ];
 
-export function OrderListScreen({ route, navigation }: Props) {
-  const customerId = route.params?.customerId;
+export function OrderListScreen({ navigation }: Props) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [status, setStatus] = useState<OrderStatus | undefined>(undefined);
   const [orderType, setOrderType] = useState<OrderType | undefined>(undefined);
@@ -46,7 +45,7 @@ export function OrderListScreen({ route, navigation }: Props) {
 
   const load = useCallback(async () => {
     try {
-      const result = await listOrders({ customerId, ...filtersRef.current });
+      const result = await listOrders({ ...filtersRef.current });
       setOrders(result.orders);
       setError(null);
     } catch (err) {
@@ -54,7 +53,7 @@ export function OrderListScreen({ route, navigation }: Props) {
     } finally {
       setIsLoading(false);
     }
-  }, [customerId]);
+  }, []);
 
   useEffect(() => {
     // Standard fetch-on-filter-change; a full data-fetching library is out of scope for this MVP.
@@ -71,6 +70,7 @@ export function OrderListScreen({ route, navigation }: Props) {
 
   return (
     <View style={styles.container}>
+      <TabHeader title="Jobs" />
       <View style={styles.filterRow}>
         {STATUS_FILTERS.map((filter) => (
           <TouchableOpacity

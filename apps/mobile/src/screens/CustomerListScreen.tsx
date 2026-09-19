@@ -1,4 +1,3 @@
-import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useFocusEffect } from "@react-navigation/native";
 import type { Customer } from "@the-pool-hub/types";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -13,10 +12,11 @@ import {
   View,
 } from "react-native";
 import { listCustomers } from "../api/customers";
+import { TabHeader } from "../components/TabHeader";
 import { ApiError } from "../lib/api-client";
-import type { RootStackParamList } from "../navigation/RootNavigator";
+import type { TabScreenProps } from "../navigation/TabNavigator";
 
-type Props = NativeStackScreenProps<RootStackParamList, "CustomerList">;
+type Props = TabScreenProps<"Customers">;
 
 function formatSecondaryLine(customer: Customer): string {
   const address = [customer.city, customer.state].filter(Boolean).join(", ");
@@ -53,28 +53,13 @@ export function CustomerListScreen({ navigation }: Props) {
     }, [load]),
   );
 
-  useEffect(() => {
-    // headerLeft is intentionally left as the default back button now that
-    // Dashboard (not this screen) is the navigation root — Log Out lives on
-    // Dashboard's header instead.
-    navigation.setOptions({
-      headerRight: () => (
-        <View style={styles.headerActions}>
-          <TouchableOpacity onPress={() => navigation.navigate("OrderList", undefined)}>
-            <Text style={styles.headerButton}>Orders</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => navigation.navigate("CustomerForm", { mode: "create" })}
-          >
-            <Text style={styles.headerButton}>+ Add</Text>
-          </TouchableOpacity>
-        </View>
-      ),
-    });
-  }, [navigation]);
-
   return (
     <View style={styles.container}>
+      <TabHeader title="Customers">
+        <TouchableOpacity onPress={() => navigation.navigate("CustomerForm", { mode: "create" })}>
+          <Text style={styles.headerButton}>+ Add</Text>
+        </TouchableOpacity>
+      </TabHeader>
       <TextInput
         style={styles.search}
         placeholder="Search customers"

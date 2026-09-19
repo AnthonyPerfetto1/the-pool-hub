@@ -103,3 +103,13 @@ export function getMonthRange(now: Date): DateRange {
     end: businessMidnightToUtc(monthEnd),
   };
 }
+
+// January 1st through December 31st of the current calendar year, according
+// to the business timezone. [start, end).
+export function getYearRange(now: Date): DateRange {
+  const today = toBusinessCalendarDate(now);
+  return {
+    start: businessMidnightToUtc({ year: today.year, month: 1, day: 1 }),
+    end: businessMidnightToUtc({ year: today.year + 1, month: 1, day: 1 }),
+  };
+}

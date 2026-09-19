@@ -37,21 +37,35 @@ export function formatTimeOnly(iso: string): string {
   return new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 }
 
+// Whole calendar days between today and `iso`, compared using the device's
+// local calendar day (0 = today, 1 = tomorrow, negative = in the past).
+function getDaysUntil(iso: string): number {
+  const date = new Date(iso);
+  const now = new Date();
+  const dateDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.round((dateDay.getTime() - today.getTime()) / (24 * 60 * 60 * 1000));
+}
+
+export function isToday(iso: string): boolean {
+  return getDaysUntil(iso) === 0;
+}
+
 // "Today · 9:00 AM" / "Tomorrow · 9:00 AM" / "Mon, Jan 5 · 9:00 AM" — all
 // compared using the device's local calendar day, matching every other
 // date display in the app (nothing here talks to the server's timezone
 // handling; it's purely a "how far away is this" label for the reader).
 export function formatAppointmentWhen(iso: string): string {
-  const date = new Date(iso);
-  const now = new Date();
-  const dateDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const diffDays = Math.round((dateDay.getTime() - today.getTime()) / (24 * 60 * 60 * 1000));
+  const diffDays = getDaysUntil(iso);
   const time = formatTimeOnly(iso);
 
   if (diffDays === 0) return `Today · ${time}`;
   if (diffDays === 1) return `Tomorrow · ${time}`;
-  const day = date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+  const day = new Date(iso).toLocaleDateString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
   return `${day} · ${time}`;
 }
 

@@ -1,7 +1,6 @@
 import { useFocusEffect } from "@react-navigation/native";
-import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { Dashboard, Order } from "@the-pool-hub/types";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   RefreshControl,
@@ -14,16 +13,17 @@ import {
 import { getDashboard } from "../api/dashboard";
 import { getProfile } from "../api/profile";
 import { useAuth } from "../auth/AuthContext";
+import { TabHeader } from "../components/TabHeader";
 import { ApiError } from "../lib/api-client";
 import {
   formatAppointmentWhen,
   formatCurrency,
   formatOrderTypeLabel,
-  formatTimeOnly,
+  isToday,
 } from "../lib/format";
-import type { RootStackParamList } from "../navigation/RootNavigator";
+import type { TabScreenProps } from "../navigation/TabNavigator";
 
-type Props = NativeStackScreenProps<RootStackParamList, "Dashboard">;
+type Props = TabScreenProps<"Home">;
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -72,19 +72,23 @@ function UpcomingStack({
     const peeks = upcoming.slice(0, 2);
     return (
       <TouchableOpacity style={styles.stackWrapper} onPress={onToggle} activeOpacity={0.8}>
-        {peeks.map((order, index) => (
-          <View
-            key={order.id}
-            style={[
-              styles.peekCard,
-              { marginHorizontal: (index + 1) * 12, marginTop: index === 0 ? -12 : -10 },
-            ]}
-          >
-            <Text style={styles.peekText} numberOfLines={1}>
-              {formatTimeOnly(order.scheduledDate)} · {order.customer.name}
-            </Text>
-          </View>
-        ))}
+        {peeks.map((order, index) => {
+          const today = isToday(order.scheduledDate);
+          return (
+            <View
+              key={order.id}
+              style={[
+                styles.peekCard,
+                today && styles.peekCardToday,
+                { marginHorizontal: (index + 1) * 12, marginTop: index === 0 ? -12 : -10 },
+              ]}
+            >
+              <Text style={[styles.peekText, today && styles.peekTextToday]} numberOfLines={1}>
+                {formatAppointmentWhen(order.scheduledDate)} · {order.customer.name}
+              </Text>
+            </View>
+          );
+        })}
         <Text style={styles.stackLabel}>
           {upcoming.length} more appointment{upcoming.length === 1 ? "" : "s"}
         </Text>
@@ -95,17 +99,25 @@ function UpcomingStack({
   return (
     <View style={styles.expandedStack}>
       <Text style={styles.sectionTitle}>Upcoming</Text>
-      {upcoming.map((order) => (
-        <TouchableOpacity
-          key={order.id}
-          style={styles.upcomingRow}
-          onPress={() => onSelect(order.id)}
-        >
-          <Text style={styles.upcomingWhen}>{formatAppointmentWhen(order.scheduledDate)}</Text>
-          <Text style={styles.upcomingCustomer}>{order.customer.name}</Text>
-          <Text style={styles.upcomingType}>{formatOrderTypeLabel(order.orderType)}</Text>
-        </TouchableOpacity>
-      ))}
+      {upcoming.map((order) => {
+        const today = isToday(order.scheduledDate);
+        return (
+          <TouchableOpacity
+            key={order.id}
+            style={styles.upcomingRow}
+            onPress={() => onSelect(order.id)}
+          >
+            <View style={styles.upcomingWhenRow}>
+              <Text style={[styles.upcomingWhen, today && styles.upcomingWhenToday]}>
+                {formatAppointmentWhen(order.scheduledDate)}
+              </Text>
+              {today ? <Text style={styles.todayBadge}>TODAY</Text> : null}
+            </View>
+            <Text style={styles.upcomingCustomer}>{order.customer.name}</Text>
+            <Text style={styles.upcomingType}>{formatOrderTypeLabel(order.orderType)}</Text>
+          </TouchableOpacity>
+        );
+      })}
       <TouchableOpacity style={styles.collapseButton} onPress={onToggle}>
         <Text style={styles.collapseText}>Hide upcoming appointments</Text>
       </TouchableOpacity>
@@ -191,33 +203,27 @@ export function DashboardScreen({ navigation }: Props) {
     }, [load]),
   );
 
-  useEffect(() => {
-    navigation.setOptions({
-      headerLeft: () => (
-        <TouchableOpacity onPress={() => signOut()}>
-          <Text style={styles.headerButton}>Log Out</Text>
-        </TouchableOpacity>
-      ),
-      headerRight: () => (
-        <View style={styles.headerActions}>
-          <TouchableOpacity onPress={() => navigation.navigate("CustomerList")}>
-            <Text style={styles.headerButton}>Customers</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate("Schedule")}>
-            <Text style={styles.headerButton}>Schedule</Text>
-          </TouchableOpacity>
-        </View>
-      ),
-    });
-  }, [navigation, signOut]);
+  const header = (
+    <TabHeader title="Dashboard">
+      <TouchableOpacity onPress={() => signOut()}>
+        <Text style={styles.headerButton}>Log Out</Text>
+      </TouchableOpacity>
+    </TabHeader>
+  );
 
   if (isLoading && !dashboard) {
-    return <ActivityIndicator style={styles.loading} />;
+    return (
+      <View style={styles.container}>
+        {header}
+        <ActivityIndicator style={styles.loading} />
+      </View>
+    );
   }
 
   if (error) {
     return (
       <View style={styles.container}>
+        {header}
         <Text style={styles.error}>{error}</Text>
         <TouchableOpacity style={styles.retryButton} onPress={load}>
           <Text style={styles.retryButtonText}>Retry</Text>
@@ -234,34 +240,36 @@ export function DashboardScreen({ navigation }: Props) {
   const greeting = getGreeting();
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      refreshControl={<RefreshControl refreshing={isLoading} onRefresh={load} />}
-    >
-      <Text style={styles.greeting}>
-        {greetingName ? `${greeting}, ${greetingName}` : greeting}
-      </Text>
+    <View style={styles.container}>
+      {header}
+      <ScrollView
+        contentContainerStyle={styles.content}
+        refreshControl={<RefreshControl refreshing={isLoading} onRefresh={load} />}
+      >
+        <Text style={styles.greeting}>
+          {greetingName ? `${greeting}, ${greetingName}` : greeting}
+        </Text>
 
-      {nextAppointment ? (
-        <>
-          <PrimaryAppointmentCard
-            order={nextAppointment}
-            onPress={() => navigation.navigate("OrderDetail", { orderId: nextAppointment.id })}
-          />
-          <UpcomingStack
-            upcoming={upcomingAppointments}
-            expanded={isUpcomingExpanded}
-            onToggle={() => setIsUpcomingExpanded((prev) => !prev)}
-            onSelect={(orderId) => navigation.navigate("OrderDetail", { orderId })}
-          />
-        </>
-      ) : (
-        <EmptyAppointmentsCard onScheduleJob={() => navigation.navigate("CustomerList")} />
-      )}
+        {nextAppointment ? (
+          <>
+            <PrimaryAppointmentCard
+              order={nextAppointment}
+              onPress={() => navigation.navigate("OrderDetail", { orderId: nextAppointment.id })}
+            />
+            <UpcomingStack
+              upcoming={upcomingAppointments}
+              expanded={isUpcomingExpanded}
+              onToggle={() => setIsUpcomingExpanded((prev) => !prev)}
+              onSelect={(orderId) => navigation.navigate("OrderDetail", { orderId })}
+            />
+          </>
+        ) : (
+          <EmptyAppointmentsCard onScheduleJob={() => navigation.navigate("Customers")} />
+        )}
 
-      <FinancialSnapshot dashboard={dashboard} />
-    </ScrollView>
+        <FinancialSnapshot dashboard={dashboard} />
+      </ScrollView>
+    </View>
   );
 }
 
@@ -363,6 +371,13 @@ const styles = StyleSheet.create({
     color: "#444",
     fontWeight: "500",
   },
+  peekCardToday: {
+    backgroundColor: "#0a7ea4",
+  },
+  peekTextToday: {
+    color: "#fff",
+    fontWeight: "700",
+  },
   stackLabel: {
     textAlign: "center",
     fontSize: 13,
@@ -388,10 +403,28 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: "#ddd",
   },
+  upcomingWhenRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
   upcomingWhen: {
     fontSize: 15,
     fontWeight: "600",
     color: "#111",
+  },
+  upcomingWhenToday: {
+    color: "#0a7ea4",
+  },
+  todayBadge: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#fff",
+    backgroundColor: "#0a7ea4",
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    overflow: "hidden",
   },
   upcomingCustomer: {
     fontSize: 14,

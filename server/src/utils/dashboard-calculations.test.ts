@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { DateRange } from "./date-ranges";
 import {
   buildShortAddress,
+  countCompletedOrders,
   selectAppointments,
   sumExpectedRevenue,
   sumMadeRevenue,
@@ -201,5 +202,53 @@ describe("buildShortAddress", () => {
   it("returns null when there is no usable address information", () => {
     const address = buildShortAddress({ street: null, city: null, state: null });
     expect(address).toBeNull();
+  });
+});
+
+describe("countCompletedOrders", () => {
+  it("counts orders completed within the range", () => {
+    const count = countCompletedOrders(
+      [
+        { completedDate: new Date("2026-02-18T00:00:00Z") },
+        { completedDate: new Date("2026-02-20T00:00:00Z") },
+      ],
+      week,
+    );
+    expect(count).toBe(2);
+  });
+
+  it("excludes orders completed outside the range", () => {
+    const count = countCompletedOrders(
+      [
+        { completedDate: new Date("2026-02-18T00:00:00Z") }, // in week
+        { completedDate: new Date("2026-01-31T00:00:00Z") }, // before week
+        { completedDate: new Date("2026-02-23T00:00:00Z") }, // next week (excluded, boundary)
+      ],
+      week,
+    );
+    expect(count).toBe(1);
+  });
+
+  it("ignores orders with no completedDate (never completed)", () => {
+    const count = countCompletedOrders(
+      [{ completedDate: new Date("2026-02-18T00:00:00Z") }, { completedDate: null }],
+      week,
+    );
+    expect(count).toBe(1);
+  });
+
+  it("returns 0 for an empty list", () => {
+    expect(countCompletedOrders([], week)).toBe(0);
+  });
+
+  it("respects month boundaries independently of week boundaries", () => {
+    const count = countCompletedOrders(
+      [
+        { completedDate: new Date("2026-02-05T00:00:00Z") }, // in month, not in week
+        { completedDate: new Date("2026-02-18T00:00:00Z") }, // in both
+      ],
+      month,
+    );
+    expect(count).toBe(2);
   });
 });

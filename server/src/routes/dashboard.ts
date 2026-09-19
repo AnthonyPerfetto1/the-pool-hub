@@ -7,11 +7,12 @@ import { customers, orders, transactions } from "../db/schema";
 import { getAuthenticatedUserId, requireAuth } from "../middleware/auth";
 import {
   buildShortAddress,
+  countCompletedOrders,
   selectAppointments,
   sumExpectedRevenue,
   sumMadeRevenue,
 } from "../utils/dashboard-calculations";
-import { getMonthRange, getWeekRange } from "../utils/date-ranges";
+import { getMonthRange, getWeekRange, getYearRange } from "../utils/date-ranges";
 import { computeAmountRemaining } from "../utils/money";
 import { toOrderResponse } from "./orders";
 
@@ -28,45 +29,65 @@ dashboardRouter.get("/dashboard", requireAuth, async (req, res, next) => {
     const now = new Date();
     const week = getWeekRange(now);
     const month = getMonthRange(now);
+    const year = getYearRange(now);
 
-    // A single window covering both periods, so revenue data is fetched in
-    // one query per table regardless of how the week and month overlap.
-    const windowStart = week.start < month.start ? week.start : month.start;
-    const windowEnd = week.end > month.end ? week.end : month.end;
+    // A single window covering all three periods, so revenue data is
+    // fetched in one query per table regardless of how they overlap (a week
+    // can dip into the previous/next month or, at year boundaries, the
+    // previous/next year).
+    const windowStart = [week.start, month.start, year.start].reduce((a, b) => (a < b ? a : b));
+    const windowEnd = [week.end, month.end, year.end].reduce((a, b) => (a > b ? a : b));
 
-    const [scheduledOrderRows, revenueOrderRows, revenueTransactionRows] = await Promise.all([
-      db
-        .select({ order: orders, customer: customers })
-        .from(orders)
-        .innerJoin(customers, eq(orders.customerId, customers.id))
-        .where(and(eq(customers.userId, userId), eq(orders.status, "scheduled")))
-        .orderBy(asc(orders.scheduledDate))
-        .limit(APPOINTMENT_LIMIT),
-      db
-        .select({ order: orders })
-        .from(orders)
-        .innerJoin(customers, eq(orders.customerId, customers.id))
-        .where(
-          and(
-            eq(customers.userId, userId),
-            ne(orders.status, "cancelled"),
-            gte(orders.scheduledDate, windowStart),
-            lt(orders.scheduledDate, windowEnd),
+    const [scheduledOrderRows, revenueOrderRows, revenueTransactionRows, completedOrderRows] =
+      await Promise.all([
+        db
+          .select({ order: orders, customer: customers })
+          .from(orders)
+          .innerJoin(customers, eq(orders.customerId, customers.id))
+          .where(and(eq(customers.userId, userId), eq(orders.status, "scheduled")))
+          .orderBy(asc(orders.scheduledDate))
+          .limit(APPOINTMENT_LIMIT),
+        db
+          .select({ order: orders })
+          .from(orders)
+          .innerJoin(customers, eq(orders.customerId, customers.id))
+          .where(
+            and(
+              eq(customers.userId, userId),
+              ne(orders.status, "cancelled"),
+              gte(orders.scheduledDate, windowStart),
+              lt(orders.scheduledDate, windowEnd),
+            ),
           ),
-        ),
-      db
-        .select({ transaction: transactions })
-        .from(transactions)
-        .innerJoin(orders, eq(transactions.orderId, orders.id))
-        .innerJoin(customers, eq(orders.customerId, customers.id))
-        .where(
-          and(
-            eq(customers.userId, userId),
-            gte(transactions.transactionDate, windowStart),
-            lt(transactions.transactionDate, windowEnd),
+        db
+          .select({ transaction: transactions })
+          .from(transactions)
+          .innerJoin(orders, eq(transactions.orderId, orders.id))
+          .innerJoin(customers, eq(orders.customerId, customers.id))
+          .where(
+            and(
+              eq(customers.userId, userId),
+              gte(transactions.transactionDate, windowStart),
+              lt(transactions.transactionDate, windowEnd),
+            ),
           ),
-        ),
-    ]);
+        // Completed orders within the same window, by completedDate — a
+        // separate axis from the scheduledDate-based query above, since a
+        // job can be scheduled in one period and actually completed in
+        // another.
+        db
+          .select({ order: orders })
+          .from(orders)
+          .innerJoin(customers, eq(orders.customerId, customers.id))
+          .where(
+            and(
+              eq(customers.userId, userId),
+              eq(orders.status, "completed"),
+              gte(orders.completedDate, windowStart),
+              lt(orders.completedDate, windowEnd),
+            ),
+          ),
+      ]);
 
     const { next, upcoming } = selectAppointments(
       scheduledOrderRows.map((row) => ({
@@ -79,6 +100,7 @@ dashboardRouter.get("/dashboard", requireAuth, async (req, res, next) => {
 
     const revenueOrders = revenueOrderRows.map((row) => row.order);
     const revenueTransactions = revenueTransactionRows.map((row) => row.transaction);
+    const completedOrders = completedOrderRows.map((row) => row.order);
 
     let nextAppointment: Dashboard["nextAppointment"] = null;
     if (next) {
@@ -100,6 +122,15 @@ dashboardRouter.get("/dashboard", requireAuth, async (req, res, next) => {
       month: {
         madeRevenue: sumMadeRevenue(revenueTransactions, month),
         expectedRevenue: sumExpectedRevenue(revenueOrders, month),
+      },
+      year: {
+        madeRevenue: sumMadeRevenue(revenueTransactions, year),
+        expectedRevenue: sumExpectedRevenue(revenueOrders, year),
+      },
+      completedOrders: {
+        week: countCompletedOrders(completedOrders, week),
+        month: countCompletedOrders(completedOrders, month),
+        year: countCompletedOrders(completedOrders, year),
       },
     };
 

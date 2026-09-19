@@ -28,6 +28,16 @@ function formatAddress(customer: Customer): string | null {
   return lines.length > 0 ? lines.join("\n") : null;
 }
 
+// Linking.openURL rejects when there's no app that can handle the URL (e.g.
+// tel: links in the iOS Simulator, which has no phone app at all) — without
+// this, that shows up as an uncaught promise rejection instead of a normal,
+// understandable failure.
+function openLinkSafely(url: string, failureMessage: string) {
+  Linking.openURL(url).catch(() => {
+    Alert.alert("Can't Open Link", failureMessage);
+  });
+}
+
 export function CustomerDetailScreen({ route, navigation }: Props) {
   const { customerId } = route.params;
   const [customer, setCustomer] = useState<Customer | null>(null);
@@ -102,13 +112,21 @@ export function CustomerDetailScreen({ route, navigation }: Props) {
       <Text style={styles.name}>{customer.name}</Text>
 
       {customer.phone ? (
-        <TouchableOpacity onPress={() => Linking.openURL(`tel:${customer.phone}`)}>
+        <TouchableOpacity
+          onPress={() =>
+            openLinkSafely(`tel:${customer.phone}`, "This device can't place phone calls.")
+          }
+        >
           <Text style={styles.link}>{customer.phone}</Text>
         </TouchableOpacity>
       ) : null}
 
       {customer.email ? (
-        <TouchableOpacity onPress={() => Linking.openURL(`mailto:${customer.email}`)}>
+        <TouchableOpacity
+          onPress={() =>
+            openLinkSafely(`mailto:${customer.email}`, "This device can't send email.")
+          }
+        >
           <Text style={styles.link}>{customer.email}</Text>
         </TouchableOpacity>
       ) : null}

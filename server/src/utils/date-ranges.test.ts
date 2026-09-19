@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getMonthRange, getWeekRange } from "./date-ranges";
+import { getMonthRange, getWeekRange, getYearRange } from "./date-ranges";
 
 // All reference instants and expected boundaries below are explicit UTC
 // timestamps computed against America/Detroit's real IANA rules, so these
@@ -63,6 +63,13 @@ describe("getWeekRange", () => {
     expect(range.start.toISOString()).toBe("2026-03-02T05:00:00.000Z"); // Monday 00:00 EST
     expect(range.end.toISOString()).toBe("2026-03-09T04:00:00.000Z"); // next Monday 00:00 EDT
   });
+
+  it("handles a week that spans a calendar year boundary", () => {
+    // Week of Monday 2026-12-28 - Sunday 2027-01-03, entirely in EST.
+    const range = getWeekRange(new Date("2026-12-31T18:00:00Z")); // Thursday that week
+    expect(range.start.toISOString()).toBe("2026-12-28T05:00:00.000Z");
+    expect(range.end.toISOString()).toBe("2027-01-04T05:00:00.000Z");
+  });
 });
 
 describe("getMonthRange", () => {
@@ -117,5 +124,27 @@ describe("getMonthRange", () => {
     const range = getMonthRange(new Date("2026-11-15T15:00:00Z"));
     expect(range.start.toISOString()).toBe("2026-11-01T04:00:00.000Z"); // Nov 1 00:00 EDT
     expect(range.end.toISOString()).toBe("2026-12-01T05:00:00.000Z"); // Dec 1 00:00 EST
+  });
+});
+
+describe("getYearRange", () => {
+  it("spans January 1st through the following January 1st, from a mid-year date", () => {
+    const range = getYearRange(new Date("2026-07-15T15:00:00Z"));
+    expect(range.start.toISOString()).toBe("2026-01-01T05:00:00.000Z"); // Jan 1, 2026 00:00 EST
+    expect(range.end.toISOString()).toBe("2027-01-01T05:00:00.000Z"); // Jan 1, 2027 00:00 EST
+  });
+
+  it("does not roll over early on New Year's Eve evening", () => {
+    // 2026-12-31 11:00 PM EST is still December 31, 2026 locally.
+    const range = getYearRange(new Date("2027-01-01T04:00:00Z"));
+    expect(range.start.toISOString()).toBe("2026-01-01T05:00:00.000Z");
+    expect(range.end.toISOString()).toBe("2027-01-01T05:00:00.000Z");
+  });
+
+  it("rolls over immediately after midnight on January 1st", () => {
+    // 2027-01-01 12:30 AM EST.
+    const range = getYearRange(new Date("2027-01-01T05:30:00Z"));
+    expect(range.start.toISOString()).toBe("2027-01-01T05:00:00.000Z");
+    expect(range.end.toISOString()).toBe("2028-01-01T05:00:00.000Z");
   });
 });

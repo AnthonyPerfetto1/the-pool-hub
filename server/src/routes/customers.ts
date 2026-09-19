@@ -209,6 +209,11 @@ customersRouter.post("/customers", requireAuth, async (req, res, next) => {
   }
 });
 
+// Unlike the list endpoint, a single customer is fetchable by id whether or
+// not it's archived — archiving preserves the customer record (per
+// docs/DATABASE.md and docs/API.md), and there is no other way to view an
+// archived customer's own details (address, notes, etc.) once they've
+// dropped off the active list.
 customersRouter.get<{ id: string }>("/customers/:id", requireAuth, async (req, res, next) => {
   try {
     const userId = getAuthenticatedUserId(req);
@@ -222,9 +227,7 @@ customersRouter.get<{ id: string }>("/customers/:id", requireAuth, async (req, r
     const [customer] = await db
       .select()
       .from(customers)
-      .where(
-        and(eq(customers.id, id), eq(customers.userId, userId), isNull(customers.archivedAt)),
-      )
+      .where(and(eq(customers.id, id), eq(customers.userId, userId)))
       .limit(1);
 
     if (!customer) {

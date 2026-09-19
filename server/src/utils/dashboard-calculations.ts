@@ -77,3 +77,20 @@ export function sumMadeRevenue(transactions: MadeRevenueTransaction[], range: Da
   }
   return centsToDecimalString(cents);
 }
+
+interface CompletedOrderRecord {
+  completedDate: Date | null;
+}
+
+// Counts orders actually completed within range — based on completedDate
+// (when the job was finished), not scheduledDate (when it was booked for),
+// since a job scheduled in one period can end up completed in another.
+export function countCompletedOrders(orders: CompletedOrderRecord[], range: DateRange): number {
+  let count = 0;
+  for (const order of orders) {
+    if (!order.completedDate) continue;
+    if (order.completedDate < range.start || order.completedDate >= range.end) continue;
+    count++;
+  }
+  return count;
+}

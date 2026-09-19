@@ -1,7 +1,6 @@
 import { useFocusEffect } from "@react-navigation/native";
-import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { Order } from "@the-pool-hub/types";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -11,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { listOrders } from "../api/orders";
+import { TabHeader } from "../components/TabHeader";
 import { ApiError } from "../lib/api-client";
 import {
   formatMonthDay,
@@ -20,9 +20,9 @@ import {
   getBusinessWeekRange,
 } from "../lib/business-week";
 import { formatCurrency, formatOrderTypeLabel, formatTimeOnly } from "../lib/format";
-import type { RootStackParamList } from "../navigation/RootNavigator";
+import type { TabScreenProps } from "../navigation/TabNavigator";
 
-type Props = NativeStackScreenProps<RootStackParamList, "Schedule">;
+type Props = TabScreenProps<"Calendar">;
 
 function DaySection({
   dayStart,
@@ -115,20 +115,13 @@ export function ScheduleScreen({ navigation }: Props) {
     }, [load, weekOffset]),
   );
 
-  useEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <View style={styles.headerActions}>
-          <TouchableOpacity onPress={() => navigation.navigate("OrderList", undefined)}>
-            <Text style={styles.headerButton}>Orders</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate("CustomerList")}>
-            <Text style={styles.headerButton}>+ New Job</Text>
-          </TouchableOpacity>
-        </View>
-      ),
-    });
-  }, [navigation]);
+  const header = (
+    <TabHeader title="Schedule">
+      <TouchableOpacity onPress={() => navigation.navigate("Customers")}>
+        <Text style={styles.headerButton}>+ New Job</Text>
+      </TouchableOpacity>
+    </TabHeader>
+  );
 
   const weekRange = useMemo(() => getBusinessWeekRange(new Date(), weekOffset), [weekOffset]);
   const dayBoundaries = useMemo(() => getBusinessDayBoundaries(weekRange.start), [weekRange]);
@@ -151,6 +144,7 @@ export function ScheduleScreen({ navigation }: Props) {
   if (error) {
     return (
       <View style={styles.container}>
+        {header}
         <Text style={styles.error}>{error}</Text>
         <TouchableOpacity style={styles.retryButton} onPress={() => load(weekOffset)}>
           <Text style={styles.retryButtonText}>Retry</Text>
@@ -160,13 +154,19 @@ export function ScheduleScreen({ navigation }: Props) {
   }
 
   if (isLoading && orders.length === 0) {
-    return <ActivityIndicator style={styles.loading} />;
+    return (
+      <View style={styles.container}>
+        {header}
+        <ActivityIndicator style={styles.loading} />
+      </View>
+    );
   }
 
   const totalJobs = orders.length;
 
   return (
     <View style={styles.container}>
+      {header}
       <View style={styles.weekHeader}>
         <TouchableOpacity
           style={styles.weekNavButton}
